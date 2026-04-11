@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext.jsx";
 import AppShell from "@/components/AppShell.jsx";
+import ToastContainer from "@/components/ToastContainer.jsx";
 import LoginPage from "@/pages/LoginPage.jsx";
 import DashboardPage from "@/pages/DashboardPage.jsx";
 import RegistroPage from "@/pages/RegistroPage.jsx";
@@ -23,23 +24,26 @@ function LoginRoute() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LoginRoute />} />
-      <Route
-        element={
-          <ProtectedRoute>
-            <AppShell />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/registro" element={<RegistroPage />} />
-        <Route path="/consulta" element={<ConsultaPage />} />
-        <Route path="/reportes" element={<ReportesPage />} />
-        <Route path="/usuarios" element={<GestionUsuariosPage />} />
-        <Route path="/ayuda" element={<AyudaPage />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<LoginRoute />} />
+        <Route
+          element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/registro" element={<RegistroPage />} />
+          <Route path="/consulta" element={<ConsultaPage />} />
+          <Route path="/reportes" element={<ReportesPage />} />
+          <Route path="/usuarios" element={<GestionUsuariosPage />} />
+          <Route path="/ayuda" element={<AyudaPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <ToastContainer />
+    </>
   );
 }

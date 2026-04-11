@@ -1,6 +1,11 @@
 import { useState } from "react";
+import { useToast } from "@/context/ToastContext.jsx";
+import { validateForm } from "@/lib/validation.js";
+import ConfirmModal from "@/components/ConfirmModal.jsx";
+import LoadingSpinner from "@/components/LoadingSpinner.jsx";
 
 export default function RegistroPage() {
+  const { success, error } = useToast();
   const [formData, setFormData] = useState({
     // Datos Personales
     nombreCompleto: "",
@@ -24,15 +29,56 @@ export default function RegistroPage() {
   });
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [errors, setErrors] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const totalSteps = 4;
+
+  const validationSchema = {
+    nombreCompleto: ["required", "name"],
+    apellido: ["required", "name"],
+    dni: ["required", "dni"],
+    emailInstitucional: ["required", "email"],
+    telefonoContacto: ["required", "phone"],
+  };
+
+  const validateStep = () => {
+    const stepFields = {
+      1: ["nombreCompleto", "apellido", "dni", "emailInstitucional", "telefonoContacto"],
+      2: ["regionAdministrativa", "seccionalOperativa"],
+      3: ["grupoSanguineo"],
+      4: [],
+    };
+
+    const fieldsToValidate = stepFields[currentStep];
+    const stepSchema = Object.keys(validationSchema)
+      .filter((key) => fieldsToValidate.includes(key))
+      .reduce((acc, key) => {
+        acc[key] = validationSchema[key];
+        return acc;
+      }, {});
+
+    const newErrors = validateForm(formData, stepSchema);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      error("Por favor completa los campos requeridos");
+      return false;
+    }
+    return true;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: null }));
+    }
   };
 
   const handleContinue = () => {
+    if (!validateStep()) return;
     if (currentStep < totalSteps) {
+      success(`✓ Paso ${currentStep} completado`);
       setCurrentStep(currentStep + 1);
     }
   };
@@ -43,9 +89,41 @@ export default function RegistroPage() {
     }
   };
 
+  const handleSaveDraft = async () => {
+    setIsSaving(true);
+    setTimeout(() => {
+      success("✓ Borrador guardado. Puedes continuar después.");
+      setIsSaving(false);
+    }, 1000);
+  };
+
   const handleSubmit = () => {
-    console.log("Formulario enviado:", formData);
-    // Aquí irá la lógica para enviar a Stitch/Backend
+    if (!validateStep()) return;
+    setShowConfirm(true);
+  };
+
+  const confirmSubmit = async () => {
+    setIsSaving(true);
+    setShowConfirm(false);
+    setTimeout(() => {
+      console.log("📤 Enviando a Stitch/Backend:", formData);
+      success("✓ Registro completado. Conéctalo con Stitch en backend.");
+      setIsSaving(false);
+      setFormData({
+        nombreCompleto: "",
+        apellido: "",
+        dni: "",
+        fechaNacimiento: "",
+        emailInstitucional: "",
+        telefonoContacto: "",
+        regionAdministrativa: "",
+        seccionalOperativa: "",
+        ordenUnidad: "",
+        condicionesMedicas: "",
+        grupoSanguineo: "",
+      });
+      setCurrentStep(1);
+    }, 1500);
   };
 
   const regions = [
@@ -355,8 +433,7 @@ export default function RegistroPage() {
         )}
       </div>
 
-      {/* Botones de acción */}
-      <div className="mt-8 flex gap-3 justify-between">
+      {/* Botones de acción */}\n      {isSaving && <LoadingSpinner text=\"Guardando...\" fullScreen />}\n\n      <div className=\"mt-8 flex gap-3 justify-between\">
         <div className="flex gap-3">
           <button
             type="button"
@@ -393,30 +470,39 @@ export default function RegistroPage() {
         </div>
 
         <div className="flex gap-3">
-          {currentStep < totalSteps && (
-            <button
-              type="button"
-              onClick={() => {
-                // Guardar como borrador
-                console.log("Guardando borrador...");
-              }}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-            >
-              Guardar Borrador
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleSaveDraft}
+            disabled={isSaving}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+          >
+            💾 Guardar Borrador
+          </button>
           <button
             type="button"
             onClick={currentStep === totalSteps ? handleSubmit : handleContinue}
-            className="flex items-center gap-2 rounded-lg bg-sinfal-navy px-4 py-2 text-sm font-semibold text-white hover:bg-opacity-90"
+            disabled={isSaving}
+            className="flex items-center gap-2 rounded-lg bg-sinfal-navy px-4 py-2 text-sm font-semibold text-white hover:bg-opacity-90 disabled:opacity-50"
           >
-            {currentStep === totalSteps ? "Completar Registro" : "Continuar Paso Sig."}
+            {currentStep === totalSteps ? "✓ Completar Registro" : "Continuar →"}
             <span className="material-symbols-outlined text-[18px]">
               arrow_forward
             </span>
           </button>
         </div>
       </div>
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        open={showConfirm}
+        type="success"
+        title="Confirmar Registro"
+        message="¿Estás seguro de que deseas completar este registro? Se enviará toda la información."
+        confirmText="Sí, Completar"
+        cancelText="Cancelar"
+        onConfirm={confirmSubmit}
+        onCancel={() => setShowConfirm(false)}
+      />
     </div>
   );
 }

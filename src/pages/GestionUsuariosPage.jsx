@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useToast } from "@/context/ToastContext.jsx";
 
 export default function GestionUsuariosPage() {
+  const { success } = useToast();
   const [selectedUser, setSelectedUser] = useState(null);
   const [filterRole, setFilterRole] = useState("Todos los Roles");
   const [filterStatus, setFilterStatus] = useState("Cualquier Estado");
@@ -8,6 +10,8 @@ export default function GestionUsuariosPage() {
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [editableModules, setEditableModules] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
 
   const [users, setUsers] = useState([
     {
@@ -57,6 +61,78 @@ export default function GestionUsuariosPage() {
       modules: ["Dashboard Principal", "Registro de Afiliada", "Módulo de Consulta", "Reportes Estadísticos"],
       fechaCreacion: "5 de Febrero, 2024",
       ultimaModificacion: "9 de Abril, 2026",
+    },
+    {
+      id: 5,
+      initials: "CV",
+      nombre: "Catalina Vélez",
+      email: "catalina.v@monolith.com",
+      rol: "AUDITOR",
+      estado: "ACTIVO",
+      ultimoAcceso: "Hoy 9:15 AM",
+      modules: ["Reportes Estadísticos"],
+      fechaCreacion: "12 de Marzo, 2024",
+      ultimaModificacion: "8 de Abril, 2026",
+    },
+    {
+      id: 6,
+      initials: "MP",
+      nombre: "Martín Pérez",
+      email: "martin.p@monolith.com",
+      rol: "OPERADOR",
+      estado: "INACTIVO",
+      ultimoAcceso: "2 de Abril, 2026",
+      modules: ["Dashboard Principal", "Módulo de Consulta"],
+      fechaCreacion: "19 de Enero, 2024",
+      ultimaModificacion: "2 de Abril, 2026",
+    },
+    {
+      id: 7,
+      initials: "LR",
+      nombre: "Laura Rodríguez",
+      email: "laura.r@monolith.com",
+      rol: "ADMINISTRADOR",
+      estado: "ACTIVO",
+      ultimoAcceso: "Ayer 11:30 PM",
+      modules: ["Dashboard Principal", "Registro de Afiliada", "Módulo de Consulta", "Reportes Estadísticos", "Gestión de Usuarios"],
+      fechaCreacion: "28 de Febrero, 2024",
+      ultimaModificacion: "7 de Abril, 2026",
+    },
+    {
+      id: 8,
+      initials: "DC",
+      nombre: "Diego Castillo",
+      email: "diego.c@monolith.com",
+      rol: "OPERADOR",
+      estado: "ACTIVO",
+      ultimoAcceso: "Hoy 1:45 PM",
+      modules: ["Dashboard Principal", "Registro de Afiliada"],
+      fechaCreacion: "15 de Marzo, 2024",
+      ultimaModificacion: "10 de Abril, 2026",
+    },
+    {
+      id: 9,
+      initials: "FS",
+      nombre: "Fernanda Silva",
+      email: "fernanda.s@monolith.com",
+      rol: "AUDITOR",
+      estado: "ACTIVO",
+      ultimoAcceso: "Ayer 4:20 PM",
+      modules: ["Reportes Estadísticos", "Dashboard Principal"],
+      fechaCreacion: "8 de Abril, 2024",
+      ultimaModificacion: "7 de Abril, 2026",
+    },
+    {
+      id: 10,
+      initials: "AR",
+      nombre: "Andrés Rivas",
+      email: "andres.r@monolith.com",
+      rol: "OPERADOR",
+      estado: "ACTIVO",
+      ultimoAcceso: "Hoy 10:20 AM",
+      modules: ["Dashboard Principal", "Registro de Afiliada", "Módulo de Consulta"],
+      fechaCreacion: "25 de Febrero, 2024",
+      ultimaModificacion: "8 de Abril, 2026",
     },
   ]);
 
@@ -108,6 +184,7 @@ export default function GestionUsuariosPage() {
     setSelectedUser(updatedUser);
     setUpdateSuccess(true);
     setShowUpdatePanel(false);
+    success(`✓ Permisos actualizados para ${editingUser.nombre}`);
 
     setTimeout(() => setUpdateSuccess(false), 3000);
   };
@@ -126,7 +203,17 @@ export default function GestionUsuariosPage() {
     return roleMatch && statusMatch;
   });
 
-  const currentUser = selectedUser || (filteredUsers.length > 0 ? filteredUsers[0] : null);
+  // Paginación
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+  const currentUser = selectedUser || (paginatedUsers.length > 0 ? paginatedUsers[0] : null);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   return (
     <div>
@@ -158,7 +245,7 @@ export default function GestionUsuariosPage() {
           </label>
           <select
             value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value)}
+            onChange={(e) => { setFilterRole(e.target.value); setCurrentPage(1); }}
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
           >
             <option>Todos los Roles</option>
@@ -173,7 +260,7 @@ export default function GestionUsuariosPage() {
           </label>
           <select
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
           >
             <option>Cualquier Estado</option>
@@ -190,7 +277,7 @@ export default function GestionUsuariosPage() {
           <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
             <div className="border-b border-slate-200 p-6">
               <p className="text-xs font-semibold uppercase text-slate-600">
-                Mostrando 10 usuarios institucionales
+                Mostrando {itemsPerPage} de {filteredUsers.length} usuarios institucionales (Página {currentPage} de {totalPages})
               </p>
             </div>
 
@@ -213,7 +300,7 @@ export default function GestionUsuariosPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {filteredUsers.map((user) => (
+                  {paginatedUsers.map((user) => (
                     <tr
                       key={user.id}
                       onClick={() => handleSelectUser(user)}
@@ -272,21 +359,33 @@ export default function GestionUsuariosPage() {
 
             {/* Paginación */}
             <div className="border-t border-slate-200 px-4 py-3 flex items-center justify-between text-xs text-slate-600">
-              <p>Página 1 de 3</p>
+              <p>Página {currentPage} de {totalPages}</p>
               <div className="flex gap-1">
-                <button className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-50">
+                <button 
+                  onClick={() => { handlePageChange(currentPage - 1); success(`Página ${currentPage - 1}`); }}
+                  disabled={currentPage === 1}
+                  className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   &lt;
                 </button>
-                <button className="px-3 py-1 rounded bg-sinfal-navy text-white">
-                  1
-                </button>
-                <button className="px-3 py-1 rounded border border-slate-300 hover:bg-slate-50">
-                  2
-                </button>
-                <button className="px-3 py-1 rounded border border-slate-300 hover:bg-slate-50">
-                  3
-                </button>
-                <button className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-50">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => { handlePageChange(page); success(`Página ${page}`); }}
+                    className={`px-3 py-1 rounded ${
+                      page === currentPage 
+                        ? 'bg-sinfal-navy text-white' 
+                        : 'border border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button 
+                  onClick={() => { handlePageChange(currentPage + 1); success(`Página ${currentPage + 1}`); }}
+                  disabled={currentPage === totalPages}
+                  className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   &gt;
                 </button>
               </div>

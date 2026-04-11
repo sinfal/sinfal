@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
+import { useToast } from "@/context/ToastContext.jsx";
+import LoadingSpinner from "@/components/LoadingSpinner.jsx";
 
 export default function ConsultaPage() {
+  const { success, error } = useToast();
   const [searchQuery, setSearchQuery] = useState("María Paula");
   const [selectedAfiliada, setSelectedAfiliada] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [searched, setSearched] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
 
   const mockResults = [
     {

@@ -1,8 +1,14 @@
 import { useState } from "react";
+import { useToast } from "@/context/ToastContext.jsx";
+import { downloadCSV, downloadJSON, downloadPDF } from "@/lib/exportUtils.js";
+import ConfirmModal from "@/components/ConfirmModal.jsx";
 
 export default function ReportesPage() {
+  const { success } = useToast();
   const [selectedDate, setSelectedDate] = useState({ start: "01-Dic-2024", end: "31-Dic-2024" });
   const [filterOpen, setFilterOpen] = useState(false);
+  const [showExportConfirm, setShowExportConfirm] = useState(false);
+  const [exportFormat, setExportFormat] = useState("csv");
 
   // Simulación de datos de gráfico de tendencia
   const tendenciaData = [
@@ -19,9 +25,42 @@ export default function ReportesPage() {
     { mes: "Nov", valor2024: 82, valor2023: 72 },
   ];
 
-  return (
-    <div>
-      <div className="mb-8 flex items-center justify-between">
+  const handleExportReport = (format) => {
+    setExportFormat(format);
+    setShowExportConfirm(true);
+  };
+
+  const confirmExport = () => {
+    const reportData = {
+      fecha_generacion: new Date().toLocaleString("es-CO"),
+      periodo: `${selectedDate.start} - ${selectedDate.end}`,
+      metricas: {
+        crecimiento_mensual: 2860,
+        reportes_auditoria: 142,
+        certificadores_vencidos: 89,
+        promedio_edad: 34.2,
+      },
+      tendencia: tendenciaData,
+      regionales: [
+        { region: "Antioquia", porcentaje: 42 },
+        { region: "Bogotá D.C.", porcentaje: 28 },
+        { region: "Valle del Cauca", porcentaje: 15 },
+        { region: "Atlántico", porcentaje: 8 },
+        { region: "Otros", porcentaje: 7 },
+      ],
+    };
+
+    if (exportFormat === "csv") {
+      downloadCSV(reportData.tendencia, `reporte_sinfal_${new Date().getTime()}.csv`);
+    } else if (exportFormat === "json") {
+      downloadJSON(reportData, `reporte_sinfal_${new Date().getTime()}.json`);
+    } else if (exportFormat === "pdf") {
+      downloadPDF(JSON.stringify(reportData, null, 2), `reporte_sinfal_${new Date().getTime()}.pdf`);
+    }
+
+    success(`✓ Reporte exportado como ${exportFormat.toUpperCase()}`);
+    setShowExportConfirm(false);
+  };
         <div>
           <div className="mb-2 h-0.5 w-10 rounded-full bg-emerald-500" />
           <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">
@@ -357,7 +396,10 @@ export default function ReportesPage() {
                     </span>
                   </td>
                   <td className="py-3 px-3 text-center">
-                    <button className="flex items-center gap-1 mx-auto text-slate-600 hover:text-sinfal-navy">
+                    <button 
+                      onClick={() => handleExportReport(report.formato.toLowerCase())}
+                      className="flex items-center gap-1 mx-auto text-slate-600 hover:text-sinfal-navy hover:font-semibold transition-colors"
+                    >
                       <span className="material-symbols-outlined text-[18px]">
                         download
                       </span>
@@ -382,6 +424,18 @@ export default function ReportesPage() {
           </p>
         </div>
       </div>
+
+      {/* Export Confirm Modal */}
+      <ConfirmModal
+        open={showExportConfirm}
+        type="info"
+        title="Exportar Reporte"
+        message={`¿Deseas exportar el reporte como ${exportFormat.toUpperCase()}? Se descargará al dispositivo.`}
+        confirmText="Sí, Descargar"
+        cancelText="Cancelar"
+        onConfirm={confirmExport}
+        onCancel={() => setShowExportConfirm(false)}
+      />
     </div>
   );
 }
