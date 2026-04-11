@@ -288,7 +288,7 @@ const buscarAfiliada = async (cedula) => {
 };
 ```
 
-## ✅ Funcionalidades Implementadas
+✅ Funcionalidades Implementadas
 
 - ✅ Login con AuthContext
 - ✅ Rutas protegidas (ProtectedRoute)
@@ -300,6 +300,69 @@ const buscarAfiliada = async (cedula) => {
 - ✅ Sidebar con navegación activa
 - ✅ Tailwind CSS responsive
 - ✅ Material Symbols icons
+- ✅ **Validación robusta de formularios** (campos requeridos, email, DNI, teléfono, contraseña)
+- ✅ **Toast/Notificaciones globales** (ToastContext + ToastContainer con éxito/error/advertencia/info)
+- ✅ **Loading spinners** (inline y fullscreen)
+- ✅ **Confirmación de acciones** (ConfirmModal reutilizable)
+- ✅ **Exportación de reportes** (CSV, JSON, PDF simulado)
+- ✅ **Búsqueda con debounce** (500ms para optimizar llamadas)
+- ✅ **Paginación interactiva** (Gestión de Usuarios con 10 usuarios en 3 páginas)
+- ✅ **Gestión de Usuarios** (tabla interactiva, filtrado, actualización de permisos por módulo)
+- ✅ **Ayuda (Centro de Ayuda)** con 4 categorías, FAQ, recursos y soporte
+
+## 📇 Sistema de Componentes UX
+
+### ToastContext + ToastContainer
+```javascript
+// Uso global desde cualquier componente
+const { success, error, warning, info } = useToast();
+success("✓ Afiliada registrada");
+error("❌ Error al buscar");
+```
+
+### Validación de Formularios
+```javascript
+// Reglas predefinidas en lib/validation.js
+const errs = validateForm(formData, {
+  email: validationRules.email,
+  dni: validationRules.dni,
+  phone: validationRules.phone
+});
+```
+
+### Confirmación de Acciones
+```javascript
+<ConfirmModal
+  open={showConfirm}
+  title="Confirmar Eliminación"
+  message="¿Está seguro?"
+  type="warning"
+  onConfirm={handleDelete}
+  onCancel={() => setShowConfirm(false)}
+/>
+```
+
+### Exportación de Datos
+```javascript
+// Disponible en ReportesPage
+downloadCSV(data, "reporte.csv");
+downloadJSON(data, "reporte.json");
+downloadPDF(data, "reporte.pdf");
+```
+
+### Búsqueda Optimizada
+```javascript
+// Debounce automático de 500ms en ConsultaPage
+const debouncedQuery = useDebounce(searchQuery, 500);
+```
+
+### Paginación
+```javascript
+// GestionUsuariosPage muestra 4 usuarios por página
+// Botones: < [1] 2 3 > con estado activo/deshabilitado
+```
+
+## 📋 Funcionalidades Pendientes (Roadmap)
 
 ## 📋 Funcionalidades Pendientes (Roadmap)
 
@@ -310,19 +373,22 @@ const buscarAfiliada = async (cedula) => {
 - [ ] Logout en servidor
 - [ ] Rate limiting
 
-### Fase 2: UX Enhancements (MEDIA)
-- [ ] Validación robusta de formularios
-- [ ] Toasts/Notificaciones visuales
-- [ ] Loading spinners
-- [ ] Manejo de errores mejorado
-- [ ] Confirmaciones de acción
+### Fase 2: UX Enhancements ✅ COMPLETA
+- [x] Validación robusta de formularios
+- [x] Toasts/Notificaciones visuales
+- [x] Loading spinners
+- [x] Manejo de errores mejorado
+- [x] Confirmaciones de acción
+- [x] Exportación de reportes (CSV, JSON, PDF)
+- [x] Búsqueda con debounce
+- [x] Paginación de resultados
 
 ### Fase 3: Features Avanzadas (MEDIA)
-- [ ] Exportación de reportes (PDF/EXCEL)
-- [ ] Gráficos interactivos (recharts, d3)
-- [ ] Filtros avanzados
-- [ ] Búsqueda con debounce
-- [ ] Paginación de resultados
+- [ ] Gráficos interactivos mejorados (recharts, d3)
+- [ ] Filtros avanzados (rango de fechas, criterios múltiples)
+- [ ] Historial de cambios / Audit log
+- [ ] Bulk actions (eliminar múltiples usuarios)
+- [ ] Importación de datos (CSV)
 
 ### Fase 4: Testing & Optimización (BAJA)
 - [ ] Jest + React Testing Library
