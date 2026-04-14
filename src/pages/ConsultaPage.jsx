@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/context/ToastContext.jsx";
 import LoadingSpinner from "@/components/LoadingSpinner.jsx";
 
@@ -9,6 +9,16 @@ export default function ConsultaPage() {
   const [searchResults, setSearchResults] = useState([]);
   const [searched, setSearched] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
+  const [casoOpen, setCasoOpen] = useState(false);
+
+  const CATEGORIAS_CASO = [
+    { key: "pago",       label: "Problemas de Pago",  icon: "payments",        color: "text-red-600",    bg: "bg-red-50",    border: "border-red-200" },
+    { key: "infra",      label: "Infraestructura",    icon: "construction",    color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200" },
+    { key: "dotacion",   label: "Dotacion",           icon: "inventory_2",     color: "text-amber-600",  bg: "bg-amber-50",  border: "border-amber-200" },
+    { key: "infantil",   label: "Cuidado Infantil",   icon: "child_care",      color: "text-pink-600",   bg: "bg-pink-50",   border: "border-pink-200" },
+    { key: "admin",      label: "Administrativo",     icon: "admin_panel_settings", color: "text-violet-600", bg: "bg-violet-50", border: "border-violet-200" },
+    { key: "otro",       label: "Otro",               icon: "more_horiz",      color: "text-slate-600",  bg: "bg-slate-100", border: "border-slate-200" },
+  ];
 
   const mockResults = [
     {
@@ -36,6 +46,20 @@ export default function ConsultaPage() {
         { nombre: "Carlos Rodriguez", relacion: "Hijo - Beneficiario" },
         { nombre: "Elena de Rodriguez", relacion: "Madre - Dependiente" },
       ],
+      casoRepresentacion: {
+        id: "CASO-2024-0183",
+        categoria: "pago",
+        estado: "En Gestion",
+        prioridad: "Alta",
+        fechaApertura: "08 de enero, 2025",
+        responsable: "Coord. Maria Suarez",
+        descripcion: "La afiliada reporta que su empleador no ha realizado el descuento y pago de la cuota sindical durante los ultimos 3 meses (octubre, noviembre y diciembre 2024), incumpliendo lo pactado en la convencion colectiva vigente. Se han enviado dos comunicaciones formales al empleador sin respuesta satisfactoria.",
+        actuaciones: [
+          { fecha: "08 Ene 2025", texto: "Apertura del caso. Se recibe denuncia verbal y se documenta.", icon: "folder_open", color: "text-blue-500" },
+          { fecha: "15 Ene 2025", texto: "Envio de carta formal al empleador solicitando aclaracion.", icon: "send", color: "text-amber-500" },
+          { fecha: "28 Ene 2025", texto: "Se radica queja ante el Ministerio de Trabajo. Numero de radicado: MT-2025-00412.", icon: "gavel", color: "text-violet-500" },
+        ],
+      },
     },
     {
       id: 2,
@@ -266,27 +290,119 @@ export default function ConsultaPage() {
             </div>
           </div>
 
-          {/* Botones de acción */}
+          {/* Botones de accion */}
           <div className="flex flex-wrap gap-3">
-            <button className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-opacity-90">
-              <span className="material-symbols-outlined text-[18px]">
-                description
-              </span>
-              Ver Cédula
+            <button className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 hover:-translate-y-0.5 transition-all">
+              <span className="material-symbols-outlined text-[18px]">description</span>
+              Ver Cedula
             </button>
-            <button className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-opacity-90">
-              <span className="material-symbols-outlined text-[18px]">
-                certificate
-              </span>
-              Ver Certificado Médico
+            <button className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 hover:-translate-y-0.5 transition-all">
+              <span className="material-symbols-outlined text-[18px]">health_and_safety</span>
+              Ver Certificado Medico
             </button>
-            <button className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
-              <span className="material-symbols-outlined text-[18px]">
-                edit
-              </span>
-              Editar Información
+            <button className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 shadow-sm transition-all">
+              <span className="material-symbols-outlined text-[18px]">edit</span>
+              Editar Informacion
             </button>
           </div>
+
+          {/* ─────── Caso de Representacion (desplegable) ─────── */}
+          {selectedAfiliada.casoRepresentacion && (() => {
+            const caso = selectedAfiliada.casoRepresentacion;
+            const cat  = CATEGORIAS_CASO.find((c) => c.key === caso.categoria) || CATEGORIAS_CASO[5];
+            const prioColor = caso.prioridad === "Alta"
+              ? "text-red-600 bg-red-50 border-red-200"
+              : caso.prioridad === "Media"
+              ? "text-amber-600 bg-amber-50 border-amber-200"
+              : "text-slate-600 bg-slate-50 border-slate-200";
+            return (
+              <div className="rounded-2xl border border-slate-200/60 bg-white shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] overflow-hidden">
+                {/* Header desplegable */}
+                <button
+                  type="button"
+                  onClick={() => setCasoOpen((v) => !v)}
+                  className="w-full flex items-center justify-between gap-4 px-6 py-5 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${cat.bg} ${cat.color} border ${cat.border}`}>
+                      <span className="material-symbols-outlined text-[22px]">{cat.icon}</span>
+                    </div>
+                    <div className="text-left">
+                      <div className="flex items-center gap-2.5">
+                        <p className="text-base font-bold text-sinfal-navy">Caso de Representacion</p>
+                        <span className="font-mono text-[11px] font-bold text-slate-400">{caso.id}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${cat.bg} ${cat.color} ${cat.border}`}>
+                          <span className="material-symbols-outlined text-[12px]">{cat.icon}</span>
+                          {cat.label}
+                        </span>
+                        <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${prioColor}`}>
+                          Prioridad {caso.prioridad}
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-blue-600">
+                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                          {caso.estado}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <span className={`material-symbols-outlined text-slate-400 text-[22px] transition-transform duration-300 ${casoOpen ? "rotate-180" : ""}`}>
+                    expand_more
+                  </span>
+                </button>
+
+                {/* Contenido expandido */}
+                {casoOpen && (
+                  <div className="border-t border-slate-100 px-6 pb-6 pt-5 space-y-6">
+                    {/* Meta info */}
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      {[
+                        { label: "Apertura",    value: caso.fechaApertura, icon: "calendar_today" },
+                        { label: "Responsable", value: caso.responsable,   icon: "manage_accounts" },
+                        { label: "Categoria",   value: cat.label,          icon: cat.icon },
+                      ].map((item) => (
+                        <div key={item.label} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 border border-slate-100">
+                          <span className={`material-symbols-outlined text-[20px] ${cat.color}`}>{item.icon}</span>
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{item.label}</p>
+                            <p className="text-sm font-bold text-slate-700 mt-0.5">{item.value}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Descripcion */}
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Descripcion del Caso</p>
+                      <p className={`rounded-xl border ${cat.border} ${cat.bg} px-4 py-4 text-sm font-semibold text-slate-700 leading-relaxed`}>
+                        {caso.descripcion}
+                      </p>
+                    </div>
+
+                    {/* Linea de tiempo de actuaciones */}
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Actuaciones del Caso</p>
+                      <div className="relative pl-6 space-y-4">
+                        <div className="absolute left-2 top-1 bottom-1 w-px bg-slate-200" />
+                        {caso.actuaciones.map((act, idx) => (
+                          <div key={idx} className="relative flex gap-4">
+                            <div className={`absolute -left-6 flex h-5 w-5 items-center justify-center rounded-full bg-white border-2 border-slate-200 ${act.color} mt-0.5`}>
+                              <span className="material-symbols-outlined text-[11px]">{act.icon}</span>
+                            </div>
+                            <div className="flex-1 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">{act.fecha}</p>
+                              <p className="text-sm font-semibold text-slate-700">{act.texto}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Historial y Vínculos */}
           <div className="grid gap-6 sm:grid-cols-2">
