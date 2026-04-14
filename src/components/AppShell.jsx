@@ -1,14 +1,46 @@
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext.jsx";
 
-const navItems = [
-  { to: "/dashboard", label: "Dashboard",       icon: "grid_view",   iconColor: "text-blue-500", iconBg: "bg-blue-50", disabled: false },
-  { to: "/registro",  label: "Registro",        icon: "person_add",  iconColor: "text-emerald-500", iconBg: "bg-emerald-50", disabled: false },
-  { to: "/consulta",  label: "Consulta",        icon: "search",      iconColor: "text-amber-500", iconBg: "bg-amber-50", disabled: false },
-  { to: "/reportes",  label: "Reportes",        icon: "bar_chart",   iconColor: "text-purple-500", iconBg: "bg-purple-50", disabled: false },
-  { to: "/usuarios",  label: "Usuarios",        icon: "group",       iconColor: "text-indigo-500", iconBg: "bg-indigo-50", disabled: false },
-  { to: "/ayuda",     label: "Ayuda",           icon: "help",        iconColor: "text-slate-500", iconBg: "bg-slate-100", disabled: false },
+const mainNav = [
+  { to: "/dashboard", label: "Dashboard",  icon: "grid_view",  iconColor: "text-blue-500",    iconBg: "bg-blue-50" },
+  { to: "/registro",  label: "Registro",   icon: "person_add", iconColor: "text-emerald-500", iconBg: "bg-emerald-50" },
+  { to: "/consulta",  label: "Consulta",   icon: "search",     iconColor: "text-amber-500",   iconBg: "bg-amber-50" },
+  { to: "/reportes",  label: "Reportes",   icon: "bar_chart",  iconColor: "text-purple-500",  iconBg: "bg-purple-50" },
+  { to: "/usuarios",  label: "Usuarios",   icon: "group",      iconColor: "text-indigo-500",  iconBg: "bg-indigo-50" },
+  { to: "/ayuda",     label: "Ayuda",      icon: "help",       iconColor: "text-slate-500",   iconBg: "bg-slate-100" },
 ];
+
+const modulosNav = [
+  { to: "/tramites",      label: "Tramites",      icon: "receipt_long",    iconColor: "text-sky-600",    iconBg: "bg-sky-50" },
+  { to: "/directorio",   label: "Directorio",    icon: "menu_book",       iconColor: "text-teal-600",   iconBg: "bg-teal-50" },
+  { to: "/finanzas",     label: "Finanzas",      icon: "paid",            iconColor: "text-green-700",  iconBg: "bg-green-50" },
+  { to: "/beneficiarios",label: "Beneficiarios", icon: "family_restroom", iconColor: "text-violet-600", iconBg: "bg-violet-50" },
+  { to: "/documentos",   label: "Documentos",    icon: "folder_open",     iconColor: "text-amber-700",  iconBg: "bg-amber-50" },
+  { to: "/administracion",label: "Administracion",icon: "settings",        iconColor: "text-slate-600",  iconBg: "bg-slate-100" },
+];
+
+function NavLink({ to, label, icon, iconColor, iconBg, active }) {
+  return (
+    <Link
+      to={to}
+      className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 overflow-hidden ${
+        active
+          ? "bg-sinfal-navy/5 text-sinfal-navy"
+          : "text-slate-600 hover:bg-slate-50 hover:text-sinfal-navy"
+      }`}
+    >
+      {active && (
+        <div className="absolute left-0 top-1/2 h-[70%] w-1.5 -translate-y-1/2 rounded-r-md bg-sinfal-navy" />
+      )}
+      <div className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors duration-300 ${active ? iconBg : "bg-transparent group-hover:" + iconBg}`}>
+        <span className={`material-symbols-outlined text-[20px] ${active ? iconColor : "text-slate-400 group-hover:" + iconColor}`}>
+          {icon}
+        </span>
+      </div>
+      <span className={active ? "font-bold" : ""}>{label}</span>
+    </Link>
+  );
+}
 
 export default function AppShell() {
   const { user, logout } = useAuth();
@@ -35,41 +67,43 @@ export default function AppShell() {
           </div>
         </div>
         
-        <nav className="flex flex-1 flex-col gap-1.5 p-4 overflow-y-auto">
-          <p className="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-slate-400 mt-2">Menú Principal</p>
-          
-          {navItems.map(({ to, label, icon, iconColor, iconBg, disabled }) => {
+        <nav className="flex flex-1 flex-col gap-1 p-4 overflow-y-auto">
+          {/* ── Menu Principal ── */}
+          <p className="px-3 pb-1 pt-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            Menu Principal
+          </p>
+          {mainNav.map(({ to, label, icon, iconColor, iconBg }) => {
             const active = isActive(to);
-            return disabled ? (
-              <span
-                key={label}
-                className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-400"
-              >
-                <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 text-slate-300`}>
-                  <span className="material-symbols-outlined text-[18px]">{icon}</span>
-                </div>
-                <span className="font-medium">{label}</span>
-              </span>
-            ) : (
-              <Link
+            return (
+              <NavLink
                 key={to}
                 to={to}
-                className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 overflow-hidden ${
-                  active
-                    ? "bg-sinfal-navy/5 text-sinfal-navy"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-sinfal-navy"
-                }`}
-              >
-                {active && (
-                  <div className="absolute left-0 top-1/2 h-[70%] w-1.5 -translate-y-1/2 rounded-r-md bg-sinfal-navy"></div>
-                )}
-                <div className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors duration-300 ${active ? iconBg : 'bg-transparent group-hover:' + iconBg}`}>
-                  <span className={`material-symbols-outlined text-[20px] ${active ? iconColor : 'text-slate-400 group-hover:' + iconColor}`}>
-                    {icon}
-                  </span>
-                </div>
-                <span className={active ? "font-bold" : ""}>{label}</span>
-              </Link>
+                label={label}
+                icon={icon}
+                iconColor={iconColor}
+                iconBg={iconBg}
+                active={active}
+              />
+            );
+          })}
+
+          {/* ── Modulos ── */}
+          <div className="my-3 border-t border-slate-200/60" />
+          <p className="px-3 pb-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            Modulos
+          </p>
+          {modulosNav.map(({ to, label, icon, iconColor, iconBg }) => {
+            const active = isActive(to);
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                label={label}
+                icon={icon}
+                iconColor={iconColor}
+                iconBg={iconBg}
+                active={active}
+              />
             );
           })}
         </nav>
