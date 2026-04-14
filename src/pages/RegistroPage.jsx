@@ -4,42 +4,105 @@ import { validateForm } from "@/lib/validation.js";
 import ConfirmModal from "@/components/ConfirmModal.jsx";
 import LoadingSpinner from "@/components/LoadingSpinner.jsx";
 
+const INITIAL_FORM = {
+  nombreCompleto: "",
+  apellido: "",
+  dni: "",
+  fechaNacimiento: "",
+  emailInstitucional: "",
+  telefonoContacto: "",
+  regionAdministrativa: "",
+  seccionalOperativa: "",
+  ordenUnidad: "",
+  condicionesMedicas: "",
+  grupoSanguineo: "",
+  archivos: [],
+};
+
+const STEPS = [
+  { label: "Datos Personales",    icon: "person"        },
+  { label: "Ubicacion Regional",  icon: "location_on"   },
+  { label: "Salud y Prevision",   icon: "favorite"      },
+  { label: "Carga de Archivos",   icon: "attach_file"   },
+];
+
+const REGIONS   = ["Seleccione region", "Antioquia", "Bogota", "Cauca", "Cundinamarca"];
+const SECTIONS  = ["Seleccione seccional", "Centro Zonal Belen", "Centro Zonal Sur", "Centro Zonal Norte", "Seccional Este"];
+const SANGRE    = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
+
+/* ────────────────────────────────────────────── */
+/* Componentes reutilizables internos             */
+/* ────────────────────────────────────────────── */
+
+function Field({ label, error, children }) {
+  return (
+    <div>
+      <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2">
+        {label}
+      </label>
+      {children}
+      {error && (
+        <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-red-500">
+          <span className="material-symbols-outlined text-[14px]">error</span>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Input({ className = "", ...props }) {
+  return (
+    <input
+      className={[
+        "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5",
+        "text-sm font-medium text-slate-800 placeholder-slate-400",
+        "focus:border-sinfal-navy focus:bg-white focus:outline-none focus:ring-2 focus:ring-sinfal-navy/10",
+        "disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed",
+        "transition duration-200",
+        className,
+      ].join(" ")}
+      {...props}
+    />
+  );
+}
+
+function Select({ className = "", children, ...props }) {
+  return (
+    <select
+      className={[
+        "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5",
+        "text-sm font-medium text-slate-700",
+        "focus:border-sinfal-navy focus:bg-white focus:outline-none focus:ring-2 focus:ring-sinfal-navy/10",
+        "transition duration-200 appearance-none cursor-pointer",
+        className,
+      ].join(" ")}
+      {...props}
+    >
+      {children}
+    </select>
+  );
+}
+
+/* ────────────────────────────────────────────── */
+/* Componente principal                           */
+/* ────────────────────────────────────────────── */
+
 export default function RegistroPage() {
   const { success, error } = useToast();
-  const [formData, setFormData] = useState({
-    // Datos Personales
-    nombreCompleto: "",
-    apellido: "",
-    dni: "",
-    fechaNacimiento: "",
-    emailInstitucional: "",
-    telefonoContacto: "",
-    
-    // Ubicación Regional
-    regionAdministrativa: "",
-    seccionalOperativa: "",
-    ordenUnidad: "",
-    
-    // Salud y Previsión
-    condicionesMedicas: "",
-    grupoSanguineo: "",
-    
-    // Archivos
-    archivos: [],
-  });
-
+  const [formData, setFormData]       = useState(INITIAL_FORM);
   const [currentStep, setCurrentStep] = useState(1);
-  const [errors, setErrors] = useState({});
-  const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors]           = useState({});
+  const [isSaving, setIsSaving]       = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const totalSteps = 4;
 
   const validationSchema = {
-    nombreCompleto: ["required", "name"],
-    apellido: ["required", "name"],
-    dni: ["required", "dni"],
+    nombreCompleto:     ["required", "name"],
+    apellido:           ["required", "name"],
+    dni:                ["required", "dni"],
     emailInstitucional: ["required", "email"],
-    telefonoContacto: ["required", "phone"],
+    telefonoContacto:   ["required", "phone"],
   };
 
   const validateStep = () => {
@@ -49,14 +112,10 @@ export default function RegistroPage() {
       3: ["grupoSanguineo"],
       4: [],
     };
-
     const fieldsToValidate = stepFields[currentStep];
     const stepSchema = Object.keys(validationSchema)
       .filter((key) => fieldsToValidate.includes(key))
-      .reduce((acc, key) => {
-        acc[key] = validationSchema[key];
-        return acc;
-      }, {});
+      .reduce((acc, key) => { acc[key] = validationSchema[key]; return acc; }, {});
 
     const newErrors = validateForm(formData, stepSchema);
     if (Object.keys(newErrors).length > 0) {
@@ -70,29 +129,25 @@ export default function RegistroPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: null }));
-    }
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
   };
 
   const handleContinue = () => {
     if (!validateStep()) return;
     if (currentStep < totalSteps) {
-      success(`✓ Paso ${currentStep} completado`);
+      success("Paso " + currentStep + " completado");
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
-  const handleSaveDraft = async () => {
+  const handleSaveDraft = () => {
     setIsSaving(true);
     setTimeout(() => {
-      success("✓ Borrador guardado. Puedes continuar después.");
+      success("Borrador guardado. Puedes continuar despues.");
       setIsSaving(false);
     }, 1000);
   };
@@ -102,369 +157,325 @@ export default function RegistroPage() {
     setShowConfirm(true);
   };
 
-  const confirmSubmit = async () => {
+  const confirmSubmit = () => {
     setIsSaving(true);
     setShowConfirm(false);
     setTimeout(() => {
-      console.log("📤 Enviando a Stitch/Backend:", formData);
-      success("✓ Registro completado. Conéctalo con Stitch en backend.");
+      success("Registro completado exitosamente.");
       setIsSaving(false);
-      setFormData({
-        nombreCompleto: "",
-        apellido: "",
-        dni: "",
-        fechaNacimiento: "",
-        emailInstitucional: "",
-        telefonoContacto: "",
-        regionAdministrativa: "",
-        seccionalOperativa: "",
-        ordenUnidad: "",
-        condicionesMedicas: "",
-        grupoSanguineo: "",
-      });
+      setFormData(INITIAL_FORM);
       setCurrentStep(1);
     }, 1500);
   };
 
-  const regions = [
-    "Seleccione región",
-    "Antioquia",
-    "Bogotá",
-    "Cauca",
-    "Cundinamarca",
-  ];
-  const sections = [
-    "Seleccione seccional",
-    "Centro Zonal Belén",
-    "Centro Zonal Sur",
-    "Centro Zonal Norte",
-    "Seccional Este",
-  ];
-
+  /* ── Render ── */
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="mb-8">
-        <div className="mb-2 h-0.5 w-10 rounded-full bg-emerald-500" />
-        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">
+      {isSaving && <LoadingSpinner text="Guardando..." fullScreen />}
+
+      {/* Header */}
+      <div className="mb-10">
+        <div className="mb-3 h-1.5 w-12 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
+        <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">
           Nuevo Expediente
         </p>
-        <h2 className="mt-2 text-2xl font-bold text-sinfal-navy">
+        <h2 className="mt-2 text-4xl font-extrabold tracking-tight bg-gradient-to-br from-sinfal-navy to-slate-500 bg-clip-text text-transparent">
           Registro de Afiliada
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Complete los datos requeridos para la formalización del afi liada de la institución. Asegúrese de que toda la documentación cargue sea rigurosa y verídica.
+        <p className="mt-2 text-base font-medium text-slate-500">
+          Complete los datos requeridos para la formalizacion del expediente institucional.
+          Asegurese de que toda la documentacion sea rigurosa y veridica.
         </p>
       </div>
 
-      {/* Indicador de pasos */}
-      <div className="mb-8 flex gap-4">
-        {[1, 2, 3, 4].map((step) => (
-          <div key={step} className="flex flex-col items-center">
-            <div
-              className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold ${
-                step === currentStep
-                  ? "bg-sinfal-navy text-white"
-                  : step < currentStep
-                  ? "bg-emerald-500 text-white"
-                  : "bg-slate-200 text-slate-600"
-              }`}
-            >
-              {step < currentStep ? "✓" : step}
-            </div>
-            <p
-              className={`mt-1 text-xs font-medium ${
-                step <= currentStep ? "text-sinfal-navy" : "text-slate-400"
-              }`}
-            >
-              {["Datos\nPersonales", "Ubicación\nRegional", "Salud y\nPrevisión", "Carga de\nArchivos"][step - 1]}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Contenido del formulario */}
-      <div className="space-y-6">
-        {currentStep === 1 && (
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h3 className="mb-4 text-lg font-semibold text-sinfal-navy">
-              1. Datos Personales
-            </h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700">
-                  Nombre Completo
-                </label>
-                <input
-                  type="text"
-                  name="nombreCompleto"
-                  value={formData.nombreCompleto}
-                  onChange={handleChange}
-                  placeholder="Ej. Ana Victoria"
-                  className="mt-2 w-full rounded-lg border border-slate-300 bg-sinfal-input px-3 py-2 text-sm placeholder-slate-500 focus:border-sinfal-navy focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700">
-                  Apellido
-                </label>
-                <input
-                  type="text"
-                  name="apellido"
-                  value={formData.apellido}
-                  onChange={handleChange}
-                  placeholder="Ej. Martínez Sosa"
-                  className="mt-2 w-full rounded-lg border border-slate-300 bg-sinfal-input px-3 py-2 text-sm placeholder-slate-500 focus:border-sinfal-navy focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700">
-                  DNI / Documento Identidad
-                </label>
-                <input
-                  type="text"
-                  name="dni"
-                  value={formData.dni}
-                  onChange={handleChange}
-                  placeholder="00-0000000-0"
-                  className="mt-2 w-full rounded-lg border border-slate-300 bg-sinfal-input px-3 py-2 text-sm placeholder-slate-500 focus:border-sinfal-navy focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700">
-                  Fecha de Nacimiento
-                </label>
-                <input
-                  type="date"
-                  name="fechaNacimiento"
-                  value={formData.fechaNacimiento}
-                  onChange={handleChange}
-                  className="mt-2 w-full rounded-lg border border-slate-300 bg-sinfal-input px-3 py-2 text-sm focus:border-sinfal-navy focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700">
-                  Email Institucional
-                </label>
-                <input
-                  type="email"
-                  name="emailInstitucional"
-                  value={formData.emailInstitucional}
-                  onChange={handleChange}
-                  placeholder="usuario@monolith.org"
-                  className="mt-2 w-full rounded-lg border border-slate-300 bg-sinfal-input px-3 py-2 text-sm placeholder-slate-500 focus:border-sinfal-navy focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700">
-                  Teléfono de Contacto
-                </label>
-                <input
-                  type="tel"
-                  name="telefonoContacto"
-                  value={formData.telefonoContacto}
-                  onChange={handleChange}
-                  placeholder="+54 011 4000-0000"
-                  className="mt-2 w-full rounded-lg border border-slate-300 bg-sinfal-input px-3 py-2 text-sm placeholder-slate-500 focus:border-sinfal-navy focus:outline-none"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 2 && (
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h3 className="mb-4 text-lg font-semibold text-sinfal-navy">
-              2. Ubicación (Regional/Seccional)
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700">
-                  Región Administrativa
-                </label>
-                <select
-                  name="regionAdministrativa"
-                  value={formData.regionAdministrativa}
-                  onChange={handleChange}
-                  className="mt-2 w-full rounded-lg border border-slate-300 bg-sinfal-input px-3 py-2 text-sm text-slate-600 focus:border-sinfal-navy focus:outline-none"
+      {/* Stepper */}
+      <div className="mb-10 flex items-center gap-0">
+        {STEPS.map((step, i) => {
+          const num      = i + 1;
+          const done     = num < currentStep;
+          const active   = num === currentStep;
+          const upcoming = num > currentStep;
+          return (
+            <div key={num} className="flex flex-1 items-center">
+              <div className="flex flex-col items-center flex-1">
+                <div
+                  className={[
+                    "flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-300 shadow-sm",
+                    done    ? "border-emerald-500 bg-emerald-500 text-white shadow-emerald-500/30" : "",
+                    active  ? "border-sinfal-navy bg-sinfal-navy text-white shadow-sinfal-navy/30 scale-110" : "",
+                    upcoming? "border-slate-200 bg-white text-slate-400" : "",
+                  ].join(" ")}
                 >
-                  {regions.map((region) => (
-                    <option key={region} value={region}>
-                      {region}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700">
-                  Seccional Operativa
-                </label>
-                <select
-                  name="seccionalOperativa"
-                  value={formData.seccionalOperativa}
-                  onChange={handleChange}
-                  className="mt-2 w-full rounded-lg border border-slate-300 bg-sinfal-input px-3 py-2 text-sm text-slate-600 focus:border-sinfal-navy focus:outline-none"
-                >
-                  {sections.map((section) => (
-                    <option key={section} value={section}>
-                      {section}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700">
-                  Orden de Unidad
-                </label>
-                <input
-                  type="text"
-                  name="ordenUnidad"
-                  value={formData.ordenUnidad}
-                  onChange={handleChange}
-                  placeholder="Auto-generado"
-                  disabled
-                  className="mt-2 w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-500"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 3 && (
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h3 className="mb-4 text-lg font-semibold text-sinfal-navy">
-              3. Salud y Previsión
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700">
-                  Afecciones Médicas
-                </label>
-                <textarea
-                  name="condicionesMedicas"
-                  value={formData.condicionesMedicas}
-                  onChange={handleChange}
-                  placeholder="Detalle condiciones críticas o alergias..."
-                  rows="4"
-                  className="mt-2 w-full rounded-lg border border-slate-300 bg-sinfal-input px-3 py-2 text-sm placeholder-slate-500 focus:border-sinfal-navy focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700">
-                  Grupo Sanguíneo
-                </label>
-                <div className="mt-2 flex gap-2">
-                  {["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"].map(
-                    (grupo) => (
-                      <button
-                        key={grupo}
-                        type="button"
-                        onClick={() =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            grupoSanguineo: grupo,
-                          }))
-                        }
-                        className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                          formData.grupoSanguineo === grupo
-                            ? "bg-sinfal-navy text-white"
-                            : "border border-slate-300 text-slate-600 hover:bg-slate-50"
-                        }`}
-                      >
-                        {grupo}
-                      </button>
-                    )
+                  {done ? (
+                    <span className="material-symbols-outlined text-[22px]">check_circle</span>
+                  ) : (
+                    <span className="material-symbols-outlined text-[22px]">{step.icon}</span>
                   )}
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 4 && (
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h3 className="mb-4 text-lg font-semibold text-sinfal-navy">
-              4. Carga de Archivos
-            </h3>
-            <p className="mb-6 text-sm text-slate-600">
-              Adjunte los documentos obligatorios a mano del caso courier, PDF, JPG HEIC SKML.
-            </p>
-
-            <div className="grid gap-6 sm:grid-cols-2">
-              {/* Copia del DNI */}
-              <div className="rounded-lg border-2 border-dashed border-slate-300 p-6 text-center hover:border-sinfal-navy hover:bg-slate-50">
-                <span className="material-symbols-outlined mb-2 block text-3xl text-slate-400">
-                  cloud_upload
-                </span>
-                <p className="text-xs font-semibold text-slate-600">
-                  Copia del DNI
+                <p className={[
+                  "mt-2 text-center text-[11px] font-bold leading-tight max-w-[72px]",
+                  active  ? "text-sinfal-navy" : "",
+                  done    ? "text-emerald-600" : "",
+                  upcoming? "text-slate-400"   : "",
+                ].join(" ")}>
+                  {step.label}
                 </p>
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.heic"
-                  className="mt-2 w-full text-xs text-slate-500"
-                />
               </div>
-
-              {/* Cobertura de Título */}
-              <div className="rounded-lg border-2 border-dashed border-slate-300 p-6 text-center hover:border-sinfal-navy hover:bg-slate-50">
-                <span className="material-symbols-outlined mb-2 block text-3xl text-slate-400">
-                  cloud_upload
-                </span>
-                <p className="text-xs font-semibold text-slate-600">
-                  Cobertura de Título
-                </p>
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.heic"
-                  className="mt-2 w-full text-xs text-slate-500"
-                />
-              </div>
+              {/* Connector line */}
+              {i < STEPS.length - 1 && (
+                <div className={[
+                  "h-0.5 flex-1 mx-2 rounded-full transition-all duration-500",
+                  num < currentStep ? "bg-emerald-400" : "bg-slate-200",
+                ].join(" ")} />
+              )}
             </div>
-          </div>
-        )}
+          );
+        })}
       </div>
 
-      {/* Botones de acción */}\n      {isSaving && <LoadingSpinner text=\"Guardando...\" fullScreen />}\n\n      <div className=\"mt-8 flex gap-3 justify-between\">
+      {/* ── PASO 1: Datos Personales ── */}
+      {currentStep === 1 && (
+        <div className="rounded-2xl border border-slate-200/60 bg-white p-8 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)]">
+          <div className="flex items-center gap-3 mb-7">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+              <span className="material-symbols-outlined text-[24px]">person</span>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-sinfal-navy">Datos Personales</h3>
+              <p className="text-xs font-semibold text-slate-400">Informacion de identificacion de la afiliada</p>
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Nombre Completo" error={errors.nombreCompleto}>
+              <Input
+                type="text"
+                name="nombreCompleto"
+                value={formData.nombreCompleto}
+                onChange={handleChange}
+                placeholder="Ej. Ana Victoria"
+              />
+            </Field>
+            <Field label="Apellido" error={errors.apellido}>
+              <Input
+                type="text"
+                name="apellido"
+                value={formData.apellido}
+                onChange={handleChange}
+                placeholder="Ej. Martinez Sosa"
+              />
+            </Field>
+            <Field label="DNI / Documento de Identidad" error={errors.dni}>
+              <Input
+                type="text"
+                name="dni"
+                value={formData.dni}
+                onChange={handleChange}
+                placeholder="00-0000000-0"
+              />
+            </Field>
+            <Field label="Fecha de Nacimiento">
+              <Input
+                type="date"
+                name="fechaNacimiento"
+                value={formData.fechaNacimiento}
+                onChange={handleChange}
+              />
+            </Field>
+            <Field label="Email Institucional" error={errors.emailInstitucional}>
+              <Input
+                type="email"
+                name="emailInstitucional"
+                value={formData.emailInstitucional}
+                onChange={handleChange}
+                placeholder="usuario@sinfal.org"
+              />
+            </Field>
+            <Field label="Telefono de Contacto" error={errors.telefonoContacto}>
+              <Input
+                type="tel"
+                name="telefonoContacto"
+                value={formData.telefonoContacto}
+                onChange={handleChange}
+                placeholder="+57 300 000 0000"
+              />
+            </Field>
+          </div>
+        </div>
+      )}
+
+      {/* ── PASO 2: Ubicacion Regional ── */}
+      {currentStep === 2 && (
+        <div className="rounded-2xl border border-slate-200/60 bg-white p-8 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)]">
+          <div className="flex items-center gap-3 mb-7">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+              <span className="material-symbols-outlined text-[24px]">location_on</span>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-sinfal-navy">Ubicacion Regional</h3>
+              <p className="text-xs font-semibold text-slate-400">Asignacion geografica e institucional</p>
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            <Field label="Region Administrativa" error={errors.regionAdministrativa}>
+              <Select
+                name="regionAdministrativa"
+                value={formData.regionAdministrativa}
+                onChange={handleChange}
+              >
+                {REGIONS.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </Select>
+            </Field>
+
+            <Field label="Seccional Operativa" error={errors.seccionalOperativa}>
+              <Select
+                name="seccionalOperativa"
+                value={formData.seccionalOperativa}
+                onChange={handleChange}
+              >
+                {SECTIONS.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </Select>
+            </Field>
+
+            <Field label="Orden de Unidad">
+              <Input
+                type="text"
+                name="ordenUnidad"
+                value={formData.ordenUnidad}
+                onChange={handleChange}
+                placeholder="Auto-generado por el sistema"
+                disabled
+              />
+            </Field>
+          </div>
+        </div>
+      )}
+
+      {/* ── PASO 3: Salud y Prevision ── */}
+      {currentStep === 3 && (
+        <div className="rounded-2xl border border-slate-200/60 bg-white p-8 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)]">
+          <div className="flex items-center gap-3 mb-7">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-100 text-red-500">
+              <span className="material-symbols-outlined text-[24px]">favorite</span>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-sinfal-navy">Salud y Prevision</h3>
+              <p className="text-xs font-semibold text-slate-400">Condiciones medicas e informacion de salud</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <Field label="Afecciones Medicas">
+              <textarea
+                name="condicionesMedicas"
+                value={formData.condicionesMedicas}
+                onChange={handleChange}
+                placeholder="Detalle condiciones criticas, alergias o antecedentes relevantes..."
+                rows={4}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 placeholder-slate-400 focus:border-sinfal-navy focus:bg-white focus:outline-none focus:ring-2 focus:ring-sinfal-navy/10 transition duration-200 resize-none"
+              />
+            </Field>
+
+            <Field label="Grupo Sanguineo" error={errors.grupoSanguineo}>
+              <div className="grid grid-cols-4 gap-2.5 mt-1">
+                {SANGRE.map((grupo) => (
+                  <button
+                    key={grupo}
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, grupoSanguineo: grupo }))}
+                    className={[
+                      "rounded-xl py-2.5 text-sm font-bold border transition-all duration-200",
+                      formData.grupoSanguineo === grupo
+                        ? "bg-red-500 border-red-500 text-white shadow-md shadow-red-500/30 scale-105"
+                        : "bg-white border-slate-200 text-slate-600 hover:border-red-300 hover:text-red-500 hover:bg-red-50",
+                    ].join(" ")}
+                  >
+                    {grupo}
+                  </button>
+                ))}
+              </div>
+            </Field>
+          </div>
+        </div>
+      )}
+
+      {/* ── PASO 4: Carga de Archivos ── */}
+      {currentStep === 4 && (
+        <div className="rounded-2xl border border-slate-200/60 bg-white p-8 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)]">
+          <div className="flex items-center gap-3 mb-7">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+              <span className="material-symbols-outlined text-[24px]">attach_file</span>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-sinfal-navy">Carga de Archivos</h3>
+              <p className="text-xs font-semibold text-slate-400">Adjunte documentacion obligatoria (PDF, JPG, PNG)</p>
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            {[
+              { titulo: "Copia del DNI",      icono: "badge",            color: "text-blue-500",   bg: "bg-blue-50",   border: "hover:border-blue-400" },
+              { titulo: "Cobertura de Titulo", icono: "workspace_premium", color: "text-purple-500", bg: "bg-purple-50", border: "hover:border-purple-400" },
+            ].map((doc) => (
+              <label
+                key={doc.titulo}
+                className={[
+                  "flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-200",
+                  "p-8 text-center cursor-pointer transition-all duration-300 group",
+                  doc.border, "hover:bg-slate-50",
+                ].join(" ")}
+              >
+                <div className={[
+                  "flex h-16 w-16 items-center justify-center rounded-2xl",
+                  doc.bg, doc.color,
+                  "group-hover:scale-110 transition-transform duration-300",
+                ].join(" ")}>
+                  <span className="material-symbols-outlined text-[32px]">{doc.icono}</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-700">{doc.titulo}</p>
+                  <p className="mt-0.5 text-xs font-semibold text-slate-400">
+                    Haz clic o arrastra el archivo aqui
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.heic"
+                  className="sr-only"
+                />
+                <span className="rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-xs font-bold text-slate-600 shadow-sm group-hover:border-sinfal-navy group-hover:text-sinfal-navy transition-colors">
+                  Seleccionar archivo
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Botones de accion ── */}
+      <div className="mt-8 flex flex-col sm:flex-row items-center gap-3 justify-between">
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => {
-              setFormData({
-                nombreCompleto: "",
-                apellido: "",
-                dni: "",
-                fechaNacimiento: "",
-                emailInstitucional: "",
-                telefonoContacto: "",
-                regionAdministrativa: "",
-                seccionalOperativa: "",
-                ordenUnidad: "",
-                condicionesMedicas: "",
-                grupoSanguineo: "",
-                archivos: [],
-              });
-              setCurrentStep(1);
-            }}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            onClick={() => { setFormData(INITIAL_FORM); setCurrentStep(1); }}
+            className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
           >
-            Cancelar Registro
+            <span className="material-symbols-outlined text-[18px] text-red-400">close</span>
+            Cancelar
           </button>
           {currentStep > 1 && (
             <button
               type="button"
               onClick={handleBack}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
             >
-              Paso Anterior
+              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+              Anterior
             </button>
           )}
         </div>
@@ -474,20 +485,28 @@ export default function RegistroPage() {
             type="button"
             onClick={handleSaveDraft}
             disabled={isSaving}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50"
           >
-            💾 Guardar Borrador
+            <span className="material-symbols-outlined text-[18px] text-amber-500">save</span>
+            Guardar Borrador
           </button>
           <button
             type="button"
             onClick={currentStep === totalSteps ? handleSubmit : handleContinue}
             disabled={isSaving}
-            className="flex items-center gap-2 rounded-lg bg-sinfal-navy px-4 py-2 text-sm font-semibold text-white hover:bg-opacity-90 disabled:opacity-50"
+            className="flex items-center gap-2.5 rounded-xl bg-sinfal-navy px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-sinfal-navy/20 ring-1 ring-inset ring-white/10 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-lg hover:shadow-sinfal-navy/30 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:hover:translate-y-0"
           >
-            {currentStep === totalSteps ? "✓ Completar Registro" : "Continuar →"}
-            <span className="material-symbols-outlined text-[18px]">
-              arrow_forward
-            </span>
+            {currentStep === totalSteps ? (
+              <>
+                <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                Completar Registro
+              </>
+            ) : (
+              <>
+                Continuar
+                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -497,8 +516,8 @@ export default function RegistroPage() {
         open={showConfirm}
         type="success"
         title="Confirmar Registro"
-        message="¿Estás seguro de que deseas completar este registro? Se enviará toda la información."
-        confirmText="Sí, Completar"
+        message="Estas seguro de que deseas completar este registro? Se enviara toda la informacion al sistema."
+        confirmText="Si, Completar"
         cancelText="Cancelar"
         onConfirm={confirmSubmit}
         onCancel={() => setShowConfirm(false)}
