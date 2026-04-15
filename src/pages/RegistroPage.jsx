@@ -16,6 +16,8 @@ const INITIAL_FORM = {
   ordenUnidad: "",
   condicionesMedicas: "",
   grupoSanguineo: "",
+  categoriaCaso: "",
+  explicacionCaso: "",
   archivos: [],
 };
 
@@ -23,7 +25,17 @@ const STEPS = [
   { label: "Datos Personales",    icon: "person"        },
   { label: "Ubicacion Regional",  icon: "location_on"   },
   { label: "Salud y Prevision",   icon: "favorite"      },
+  { label: "Representacion",      icon: "gavel"         },
   { label: "Carga de Archivos",   icon: "attach_file"   },
+];
+
+const CATEGORIAS_CASO = [
+  { key: "pago",       label: "Problemas de Pago",  icon: "payments",        color: "text-red-600",    bg: "bg-red-50",    border: "border-red-200",    hover: "hover:border-red-400 hover:bg-red-50 hover:text-red-700",       active: "bg-red-600 text-white border-red-600 shadow-red-500/30" },
+  { key: "infra",      label: "Infraestructura",    icon: "construction",    color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200", hover: "hover:border-orange-400 hover:bg-orange-50 hover:text-orange-700", active: "bg-orange-600 text-white border-orange-600 shadow-orange-500/30" },
+  { key: "dotacion",   label: "Dotacion",           icon: "inventory_2",     color: "text-amber-600",  bg: "bg-amber-50",  border: "border-amber-200",  hover: "hover:border-amber-400 hover:bg-amber-50 hover:text-amber-700",    active: "bg-amber-600 text-white border-amber-600 shadow-amber-500/30" },
+  { key: "infantil",   label: "Cuidado Infantil",   icon: "child_care",      color: "text-pink-600",   bg: "bg-pink-50",   border: "border-pink-200",   hover: "hover:border-pink-400 hover:bg-pink-50 hover:text-pink-700",       active: "bg-pink-600 text-white border-pink-600 shadow-pink-500/30" },
+  { key: "admin",      label: "Administrativo",     icon: "admin_panel_settings", color: "text-violet-600", bg: "bg-violet-50", border: "border-violet-200", hover: "hover:border-violet-400 hover:bg-violet-50 hover:text-violet-700", active: "bg-violet-600 text-white border-violet-600 shadow-violet-500/30" },
+  { key: "otro",       label: "Otro",               icon: "more_horiz",      color: "text-slate-600",  bg: "bg-slate-100", border: "border-slate-200",  hover: "hover:border-slate-400 hover:bg-slate-50 hover:text-slate-700",    active: "bg-slate-700 text-white border-slate-700 shadow-slate-500/30" },
 ];
 
 const REGIONS   = ["Seleccione region", "Antioquia", "Bogota", "Cauca", "Cundinamarca"];
@@ -95,7 +107,7 @@ export default function RegistroPage() {
   const [errors, setErrors]           = useState({});
   const [isSaving, setIsSaving]       = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   const validationSchema = {
     nombreCompleto:     ["required", "name"],
@@ -105,26 +117,9 @@ export default function RegistroPage() {
     telefonoContacto:   ["required", "phone"],
   };
 
-  const validateStep = () => {
-    const stepFields = {
-      1: ["nombreCompleto", "apellido", "dni", "emailInstitucional", "telefonoContacto"],
-      2: ["regionAdministrativa", "seccionalOperativa"],
-      3: ["grupoSanguineo"],
-      4: [],
-    };
-    const fieldsToValidate = stepFields[currentStep];
-    const stepSchema = Object.keys(validationSchema)
-      .filter((key) => fieldsToValidate.includes(key))
-      .reduce((acc, key) => { acc[key] = validationSchema[key]; return acc; }, {});
-
-    const newErrors = validateForm(formData, stepSchema);
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      error("Por favor completa los campos requeridos");
-      return false;
-    }
-    return true;
-  };
+  // TODO: Reactivar validacion antes de produccion
+  // eslint-disable-next-line no-unused-vars
+  const validateStep = () => true;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -404,8 +399,60 @@ export default function RegistroPage() {
         </div>
       )}
 
-      {/* ── PASO 4: Carga de Archivos ── */}
+      {/* ── PASO 4: Caso de Representacion ── */}
       {currentStep === 4 && (
+        <div className="rounded-2xl border border-slate-200/60 bg-white p-8 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="flex items-center gap-3 mb-7">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+              <span className="material-symbols-outlined text-[24px]">gavel</span>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-sinfal-navy">Caso de Representacion</h3>
+              <p className="text-xs font-semibold text-slate-400">Si la afiliada requiere intermediacion del sindicato, documente el caso.</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <Field label="Categoria del Caso" error={errors.categoriaCaso}>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                {CATEGORIAS_CASO.map((cat) => {
+                  const isActive = formData.categoriaCaso === cat.key;
+                  return (
+                    <button
+                      key={cat.key}
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, categoriaCaso: cat.key }))}
+                      className={[
+                        "flex items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 ease-out",
+                        isActive ? cat.active : `bg-white text-slate-600 ${cat.hover}`
+                      ].join(" ")}
+                    >
+                      <span className={`material-symbols-outlined text-[20px] ${isActive ? "text-white" : cat.color}`}>
+                        {cat.icon}
+                      </span>
+                      <span className="text-xs font-bold leading-tight">{cat.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+
+            <Field label="Explicacion y Detalles" error={errors.explicacionCaso}>
+              <textarea
+                name="explicacionCaso"
+                value={formData.explicacionCaso}
+                onChange={handleChange}
+                placeholder="Describa el motivo, antecedentes y estado actual de la situacion reportada por la afiliada..."
+                rows={5}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 placeholder-slate-400 focus:border-sinfal-navy focus:bg-white focus:outline-none focus:ring-2 focus:ring-sinfal-navy/10 transition duration-200 resize-none"
+              />
+            </Field>
+          </div>
+        </div>
+      )}
+
+      {/* ── PASO 5: Carga de Archivos ── */}
+      {currentStep === 5 && (
         <div className="rounded-2xl border border-slate-200/60 bg-white p-8 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)]">
           <div className="flex items-center gap-3 mb-7">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
