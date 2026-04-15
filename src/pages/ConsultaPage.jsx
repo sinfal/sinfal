@@ -10,6 +10,7 @@ export default function ConsultaPage() {
   const [searched, setSearched] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [casoOpen, setCasoOpen] = useState(false);
+  const [orgModal, setOrgModal] = useState(false);
 
   const CATEGORIAS_CASO = [
     { key: "pago",       label: "Problemas de Pago",  icon: "payments",        color: "text-red-600",    bg: "bg-red-50",    border: "border-red-200" },
@@ -42,10 +43,20 @@ export default function ConsultaPage() {
         estadoMedico: "Hipertensión controlada. Tratamiento activo.",
         ultimaActualizacion: "14 de Octubre, 2023 por Centro Belén",
       },
-      familiaVinculos: [
-        { nombre: "Carlos Rodriguez", relacion: "Hijo - Beneficiario" },
-        { nombre: "Elena de Rodriguez", relacion: "Madre - Dependiente" },
-      ],
+      vinculoOrg: {
+        liderSeccional: { nombre: "Carmen Ines Suarez", cargo: "Lider Seccional", tel: "312 800 9900" },
+        seccional: "Centro Zonal Belen",
+        regional: "Antioquia",
+        organigrama: [
+          { id: "dir",   nombre: "Luis Herrera",       cargo: "Director Regional",  nivel: 0, padre: null },
+          { id: "coord", nombre: "Carmen I. Suarez",   cargo: "Lider Seccional",     nivel: 1, padre: "dir" },
+          { id: "sec",   nombre: "Pedro Ramirez",      cargo: "Secretario",          nivel: 2, padre: "coord" },
+          { id: "tes",   nombre: "Luz M. Tovar",       cargo: "Tesorera",            nivel: 2, padre: "coord" },
+          { id: "fis",   nombre: "Jorge A. Mora",      cargo: "Fiscal",              nivel: 2, padre: "coord" },
+          { id: "af1",   nombre: "Maria P. Rodriguez", cargo: "Afiliada",            nivel: 3, padre: "coord", highlight: true },
+          { id: "af2",   nombre: "Gloria E. Martinez", cargo: "Afiliada",            nivel: 3, padre: "coord" },
+        ],
+      },
       casoRepresentacion: {
         id: "CASO-2024-0183",
         categoria: "pago",
@@ -437,27 +448,45 @@ export default function ConsultaPage() {
               </div>
             </div>
 
-            {/* Vínculos Familiares */}
-            <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <h4 className="mb-4 font-semibold text-sinfal-navy">
-                Vínculos Familiares
-              </h4>
-              <div className="space-y-2">
-                {selectedAfiliada.familiaVinculos.map((vinculo, idx) => (
-                  <div key={idx} className="flex items-start gap-3 rounded-lg bg-slate-50 p-3">
-                    <span className="material-symbols-outlined text-slate-600">
-                      person
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-slate-700">
-                        {vinculo.nombre}
-                      </p>
-                      <p className="text-xs text-slate-500">{vinculo.relacion}</p>
-                    </div>
+            {/* Vinculo Organizacional */}
+            {selectedAfiliada.vinculoOrg && (
+              <div className="rounded-2xl border border-slate-200/60 bg-white shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] overflow-hidden">
+                <div className="border-b border-slate-100 px-5 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-indigo-500 text-[20px]">account_tree</span>
+                    <h4 className="text-sm font-black uppercase tracking-wider text-slate-700">Vinculo Organizacional</h4>
                   </div>
-                ))}
+                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-full px-2.5 py-0.5 uppercase tracking-wider">
+                    {selectedAfiliada.vinculoOrg.seccional}
+                  </span>
+                </div>
+
+                <div className="p-5 space-y-3">
+                  {/* Lider Seccional */}
+                  <div className="flex items-center gap-4 rounded-xl bg-indigo-50 border border-indigo-100 p-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sinfal-navy text-white font-black text-lg shadow-md shrink-0">
+                      {selectedAfiliada.vinculoOrg.liderSeccional.nombre.split(" ").map(n => n[0]).join("").slice(0,2)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sinfal-navy truncate">{selectedAfiliada.vinculoOrg.liderSeccional.nombre}</p>
+                      <p className="text-xs font-semibold text-indigo-600 mt-0.5">{selectedAfiliada.vinculoOrg.liderSeccional.cargo}</p>
+                      <p className="text-[11px] font-semibold text-slate-400 mt-0.5">{selectedAfiliada.vinculoOrg.liderSeccional.tel}</p>
+                    </div>
+                    <span className="material-symbols-outlined text-indigo-300 text-[20px]">star</span>
+                  </div>
+
+                  {/* Boton ver organigrama */}
+                  <button
+                    type="button"
+                    onClick={() => setOrgModal(true)}
+                    className="group w-full flex items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-indigo-200 py-3 text-sm font-bold text-indigo-600 hover:bg-indigo-50 hover:border-indigo-400 transition-all duration-200"
+                  >
+                    <span className="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">account_tree</span>
+                    Ver Organigrama de la Seccional
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Aviso Legal */}
@@ -487,6 +516,144 @@ export default function ConsultaPage() {
             search
           </span>
           <p className="text-slate-600">Usa la barra de búsqueda para encontrar afiliadas</p>
+        </div>
+      )}
+      {/* ── Modal Organigrama ── */}
+      {orgModal && selectedAfiliada?.vinculoOrg && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,18,51,0.55)", backdropFilter: "blur(6px)" }}
+          onClick={() => setOrgModal(false)}
+        >
+          <div
+            className="relative w-full max-w-2xl rounded-3xl bg-white shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header modal */}
+            <div className="flex items-center justify-between border-b border-slate-100 px-7 py-5 bg-gradient-to-r from-sinfal-navy to-slate-700">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-white text-[24px]">account_tree</span>
+                <div>
+                  <p className="text-white font-extrabold text-lg">Organigrama Seccional</p>
+                  <p className="text-slate-300 text-xs font-semibold">{selectedAfiliada.vinculoOrg.seccional} — {selectedAfiliada.vinculoOrg.regional}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setOrgModal(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            {/* Organigrama visual */}
+            <div className="p-8 overflow-auto">
+              <OrgChart nodos={selectedAfiliada.vinculoOrg.organigrama} />
+            </div>
+
+            <div className="border-t border-slate-100 px-7 py-4 flex items-center gap-2 bg-slate-50">
+              <span className="h-3 w-3 rounded-full bg-indigo-500"></span>
+              <p className="text-xs font-bold text-indigo-600">Afiliada activa</p>
+              <span className="mx-2 text-slate-300">|</span>
+              <span className="h-3 w-3 rounded-full bg-sinfal-navy"></span>
+              <p className="text-xs font-bold text-slate-600">Cargo directivo</p>
+              <span className="mx-2 text-slate-300">|</span>
+              <span className="h-3 w-3 rounded-full bg-slate-300"></span>
+              <p className="text-xs font-bold text-slate-400">Resto de la seccional</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Componente Organigrama CSS ── */
+function OrgNode({ nodo }) {
+  const isHighlight = nodo.highlight;
+  const isNivel0    = nodo.nivel === 0;
+  const isNivel1    = nodo.nivel === 1;
+  const initials    = nodo.nombre.split(" ").map(n => n[0]).join("").slice(0, 2);
+
+  const avatarCls = isHighlight
+    ? "bg-indigo-500 ring-4 ring-indigo-200"
+    : isNivel0 || isNivel1
+    ? "bg-sinfal-navy ring-2 ring-sinfal-navy/20"
+    : "bg-slate-400 ring-2 ring-slate-200";
+
+  const cardCls = isHighlight
+    ? "border-indigo-300 bg-indigo-50 shadow-md shadow-indigo-200"
+    : isNivel0 || isNivel1
+    ? "border-slate-300 bg-white shadow-sm"
+    : "border-slate-200 bg-white";
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className={`flex h-10 w-10 items-center justify-center rounded-full text-white text-sm font-black shadow ${avatarCls}`}>
+        {initials}
+      </div>
+      <div className={`rounded-xl border px-3 py-2 text-center min-w-[100px] max-w-[130px] ${cardCls}`}>
+        <p className="text-[11px] font-black text-slate-800 leading-tight">{nodo.nombre}</p>
+        <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400 mt-0.5">{nodo.cargo}</p>
+      </div>
+    </div>
+  );
+}
+
+function OrgChart({ nodos }) {
+  const nivel0 = nodos.filter(n => n.nivel === 0);
+  const nivel1 = nodos.filter(n => n.nivel === 1);
+  const nivel2 = nodos.filter(n => n.nivel === 2);
+  const nivel3 = nodos.filter(n => n.nivel === 3);
+
+  return (
+    <div className="flex flex-col items-center gap-0 select-none">
+      {/* Nivel 0 */}
+      <div className="flex gap-8 justify-center">
+        {nivel0.map(n => <OrgNode key={n.id} nodo={n} />)}
+      </div>
+
+      {/* Conector 0->1 */}
+      {nivel1.length > 0 && <div className="w-px h-6 bg-slate-300" />}
+
+      {/* Nivel 1 */}
+      {nivel1.length > 0 && (
+        <div className="flex gap-8 justify-center">
+          {nivel1.map(n => <OrgNode key={n.id} nodo={n} />)}
+        </div>
+      )}
+
+      {/* Conector 1->2 */}
+      {nivel2.length > 0 && (
+        <div className="relative flex justify-center" style={{ width: `${Math.max(nivel2.length, nivel3.length) * 150}px`, minWidth: 300 }}>
+          <div className="w-px h-6 bg-slate-300" />
+          <div className="absolute top-6 left-[15%] right-[15%] h-px bg-slate-300" />
+        </div>
+      )}
+
+      {/* Nivel 2 */}
+      {nivel2.length > 0 && (
+        <div className="flex gap-6 justify-center">
+          {nivel2.map(n => (
+            <div key={n.id} className="flex flex-col items-center gap-0">
+              <OrgNode nodo={n} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Conector 2->3 */}
+      {nivel3.length > 0 && (
+        <div className="relative flex justify-center" style={{ width: `${nivel3.length * 150}px`, minWidth: 260 }}>
+          <div className="w-px h-6 bg-indigo-300" />
+          <div className="absolute top-6 left-[15%] right-[15%] h-px bg-indigo-300" />
+        </div>
+      )}
+
+      {/* Nivel 3 (afiliadas) */}
+      {nivel3.length > 0 && (
+        <div className="flex gap-6 justify-center">
+          {nivel3.map(n => <OrgNode key={n.id} nodo={n} />)}
         </div>
       )}
     </div>
