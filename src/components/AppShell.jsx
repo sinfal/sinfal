@@ -143,7 +143,7 @@ export default function AppShell() {
              </button>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-8 relative isolate">
+        <main className="flex-1 overflow-auto p-8">
            <div className="mx-auto max-w-7xl">
               <Outlet />
            </div>
