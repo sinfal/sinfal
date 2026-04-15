@@ -132,10 +132,7 @@ export default function AppShell() {
       </aside>
       
       <div className="flex min-w-0 flex-1 flex-col relative z-0">
-        <header className="flex h-20 items-center justify-between border-b border-slate-200/60 bg-white/80 px-8 backdrop-blur-xl sticky top-0 z-10">
-          <h1 className="text-xl font-extrabold bg-gradient-to-r from-sinfal-navy to-slate-600 bg-clip-text text-transparent">
-            Panel Institucional
-          </h1>
+        <header className="flex h-14 items-center justify-end border-b border-slate-200/60 bg-white/80 px-8 backdrop-blur-xl sticky top-0 z-10">
           <div className="flex items-center gap-3">
              <button className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 hover:text-sinfal-navy transition-all hover:shadow">
                  <span className="material-symbols-outlined text-[20px]">search</span>
